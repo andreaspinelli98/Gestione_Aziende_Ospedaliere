@@ -10,6 +10,10 @@ Applicazione web per la gestione semplificata di un insieme di aziende ospedalie
 - **PostgreSQL**, sistema di gestione della base di dati
 - **pgAdmin**, strumento per l'amministrazione e la gestione del database PostgreSQL
 
+# Sito web
+La navigazione del sito è basata su una struttura a link: partendo dalla home page, ogni collegamento porta alla relativa sezione dell'applicativo. La grafica è minimale, poiché l'obiettivo del progetto è la gestione della base di dati piuttosto che la cura dell'aspetto visivo.
+- ![Home](SitoWeb/Home.png)
+
 # Schemi
 - Schema ER1
   ![Schema ER1](Docs/Diagrams/SchemaER1.png)
