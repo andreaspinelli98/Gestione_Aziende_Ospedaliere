@@ -1,2 +1,11 @@
-# Gestione_Aziende_Ospedaliere
-Sistema per la gestione di ospedali, reparti, personale e prenotazioni esami, sviluppato con PHP e PostgreSQL per il corso di Basi di Dati e Web.
+# Gestione Aziende Ospedaliere
+Progetto realizzato per il corso di Basi di Dati e Web (a.a. /2023/24).
+
+# Descrizione
+Applicazione web per la gestione semplificata di un insieme di aziende ospedaliere di una regione: reparti, personale (medici, infermieri, personale amministrativo), pazienti, ricoveri, laboratori/ambulatori, esami e prenotazioni.
+
+# Tecnologie utilizzate
+- **XAMPP**, ambiente locale per l'esecuzione del sito (Apache), accessibile tramite localhost
+- **PHP**, logica applicativa lato server
+- **PostgreSQL**, sistema di gestione della base di dati
+- **pgAdmin**, strumento per l'amministrazione e la gestione del database PostgreSQL
