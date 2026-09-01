@@ -11,9 +11,12 @@ Applicazione web per la gestione semplificata di un insieme di aziende ospedalie
 - **pgAdmin**, strumento per l'amministrazione e la gestione del database PostgreSQL
 
 # Schemi
-![Schema ER1] (Docs/Diagrams/SchemaER1.png)
-![Schema ER2] (Docs/Diagrams/SchemaER2.png)
-![Schema di navigazione sito](Docs/Diagrams/navigazioneSito.png)
+- Schema ER1
+  ![Schema ER1](Docs/Diagrams/SchemaER1.png)
+- Schema ER2
+  ![Schema ER2](Docs/Diagrams/SchemaER2.png)
+- Schema di Navigazione del sito
+  ![Schema di navigazione sito](Docs/Diagrams/navigazioneSito.png)
 
 # Documentazione
 - [Specifica del progetto](Docs/progetto2023-2024.pdf)
