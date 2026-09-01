@@ -1,0 +1,685 @@
+CREATE DOMAIN COSTO AS VARCHAR CHECK
+(value = 'ssn' OR value = 'privato');
+
+CREATE DOMAIN INTEST AS VARCHAR CHECK
+(value = 'interno' OR value = 'esterno');
+
+CREATE DOMAIN FASCIA AS VARCHAR CHECK
+(value = 'verde' OR value = 'gialla' OR value = 'rossa');
+
+CREATE DOMAIN ORA AS VARCHAR CHECK
+(value = '6-14' OR value = '14-22' OR value = '22-6');
+
+--controllo  che domini seguenti abbiano gli apici
+CREATE DOMAIN GRADO AS VARCHAR CHECK
+(value='A' OR value='B' OR value='C');
+
+CREATE DOMAIN AREA AS VARCHAR CHECK
+(value='sanità pubblica' OR value='pediatria' OR value='psichiatria' OR value='area critica' OR value='geriatria');
+
+CREATE TABLE ospedale (
+	codosp VARCHAR (20) PRIMARY KEY,
+    	nomeosp VARCHAR (20) NOT NULL,
+    	indirizzosp VARCHAR(20) UNIQUE,
+	tel VARCHAR (10) UNIQUE
+);
+
+CREATE TABLE reparto (
+	codiceosp VARCHAR (20),
+	nomerep VARCHAR (20) NOT NULL,
+    	telrep VARCHAR (10) UNIQUE,
+    	orariovisite VARCHAR (20) NOT NULL,
+    	PRIMARY KEY (codiceosp, nomerep),
+	FOREIGN KEY (codiceosp) REFERENCES ospedale(codosp) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE ambulatorio (
+	nomeamb VARCHAR(20) NOT NULL,
+	tipoamb INTEST,
+	pianoamb VARCHAR(5),
+	indirizzoamb VARCHAR(20) UNIQUE,
+	telamb VARCHAR(10) UNIQUE,
+	oraperturamb TIME NOT NULL,
+	PRIMARY KEY(nomeamb)
+);
+
+CREATE TABLE stanzanalisi (
+	nomeamb VARCHAR(20),
+	numstanza INTEGER NOT NULL,
+	PRIMARY KEY(nomeamb, numstanza),
+	FOREIGN KEY (nomeamb) REFERENCES ambulatorio(nomeamb) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE stanzaricovero ( 
+	codiceosp VARCHAR(20), 
+	nomerep VARCHAR(20), 
+	numstanza INTEGER NOT NULL, 
+	piano VARCHAR(5) NOT NULL, 
+	PRIMARY KEY (codiceosp, nomerep, numstanza), 
+	FOREIGN KEY (codiceosp) REFERENCES ospedale(codosp) ON DELETE CASCADE ON UPDATE CASCADE, 
+	FOREIGN KEY (codiceosp, nomerep) REFERENCES reparto(codiceosp, nomerep) ON DELETE CASCADE ON UPDATE CASCADE );
+
+
+CREATE TABLE salaoperatoria (
+	codiceosp VARCHAR(20),
+   	nomereparto VARCHAR(20),
+   	numsala INTEGER NOT NULL,
+    	PRIMARY KEY (codiceosp, nomereparto, numsala),
+    	FOREIGN KEY (codiceosp) REFERENCES ospedale(codosp) ON DELETE CASCADE ON UPDATE CASCADE,
+    	FOREIGN KEY (codiceosp, nomereparto) REFERENCES reparto(codiceosp, nomerep) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE letto (
+	codiceosp VARCHAR(20),
+	nomereparto VARCHAR(20),
+	numstanza INTEGER,
+	numletto INTEGER NOT NULL,
+	statoletto VARCHAR(10) NOT NULL,
+	PRIMARY KEY (codiceosp, nomereparto, numstanza, numletto),
+	FOREIGN KEY (codiceosp, nomereparto) REFERENCES reparto(codiceosp, nomerep) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (codiceosp, nomereparto, numstanza) REFERENCES stanzaricovero(codiceosp, nomerep, numstanza) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE paziente (
+	tesserasanitaria VARCHAR(16) NOT NULL,
+	nomepaz VARCHAR(20) NOT NULL,
+	cognomepaz VARCHAR(20) NOT NULL,
+	etàpaz INTEGER NOT NULL,
+	datanascita DATE NOT NULL,
+	indirizzopaz VARCHAR(20) NOT NULL,
+	telpaz VARCHAR(10) UNIQUE,
+	città VARCHAR(20) NOT NULL,
+	datadimiss DATE,
+	PRIMARY KEY (tesserasanitaria)
+);
+
+CREATE TABLE ricovero (
+    codiceosp VARCHAR(20),
+    nomereparto VARCHAR(20),
+    numstanza INTEGER,
+    numletto INTEGER not null,
+    tessanit VARCHAR(20),
+    id VARCHAR(20),
+    datainizio DATE,
+    datafine DATE,
+    PRIMARY KEY (codiceosp, nomereparto, numstanza, numletto, tessanit, id),
+    FOREIGN KEY (tessanit) REFERENCES paziente(tesserasanitaria) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (codiceosp, nomereparto) REFERENCES reparto(codiceosp, nomerep) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (codiceosp, nomereparto, numstanza) REFERENCES stanzaricovero(codiceosp, nomerep, numstanza) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (codiceosp, nomereparto, numstanza, numletto) REFERENCES letto(codiceosp, nomereparto, numstanza, numletto) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE patologia (
+	nome VARCHAR(50) NOT NULL,
+	PRIMARY KEY (nome)
+);
+
+CREATE TABLE diagnosi (
+	tessanit VARCHAR(16),
+	malattia VARCHAR(50),
+	PRIMARY KEY (tessanit, malattia),
+	FOREIGN KEY (tessanit) REFERENCES paziente(tesserasanitaria) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (malattia) REFERENCES patologia(nome) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE prontosoccorso ( 
+	codiceosp VARCHAR(5), 
+	nomeps VARCHAR(50), 
+	PRIMARY KEY (codiceosp), 
+	FOREIGN KEY (codiceosp) REFERENCES ospedale(codosp) ON DELETE CASCADE ON UPDATE CASCADE 
+);
+
+CREATE TABLE personaleammin (
+	codiceosp VARCHAR(20) NOT NULL,
+	rep VARCHAR(20) NOT NULL,
+    	codfisc VARCHAR(16) UNIQUE NOT NULL,
+	nome VARCHAR(20) NOT NULL,
+	cognome VARCHAR(20) NOT NULL,
+	tel VARCHAR(10) NOT NULL,
+	livello GRADO,
+	PRIMARY KEY (codiceosp, rep, codfisc),
+	FOREIGN KEY (codiceosp, rep) REFERENCES reparto(codiceosp, nomerep) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE infermiere (
+codiceosp VARCHAR(20) NOT NULL,
+	rep VARCHAR(20) NOT NULL,
+    	codfisc VARCHAR(16) UNIQUE NOT NULL,
+    	nome VARCHAR(20) NOT NULL,
+    	cognome VARCHAR(20) NOT NULL,
+    	tel VARCHAR(10) NOT NULL,
+    	tipo AREA,
+    	PRIMARY KEY (codiceosp, rep, codfisc),
+    	FOREIGN KEY (codiceosp, rep) REFERENCES reparto(codiceosp, nomerep) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE medico (
+    	codiceosp VARCHAR(20) NOT NULL,
+rep VARCHAR(20) NOT NULL,
+    	codfisc VARCHAR(16) UNIQUE NOT NULL,
+    	nome VARCHAR(20) NOT NULL,
+    	cognome VARCHAR(20) NOT NULL,
+    	tel VARCHAR(10) NOT NULL,
+    	anzianità INTEGER,
+    	PRIMARY KEY (codiceosp, rep, codfisc),
+    	FOREIGN KEY (codiceosp, rep) REFERENCES reparto(codiceosp, nomerep) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE turno (
+	codiceosp VARCHAR(5),
+	orario ORA,
+	giorno VARCHAR(10) NOT NULL,
+	PRIMARY KEY (codiceosp, orario, giorno),
+	FOREIGN KEY (codiceosp) REFERENCES prontosoccorso(codiceosp) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE turnazioneinf (
+    codfisc VARCHAR(16),
+    codiceosp VARCHAR(5),
+    fasciainf ORA,
+    giorno VARCHAR(10) NOT NULL,
+    PRIMARY KEY(codfisc, codiceosp, fasciainf, giorno),
+FOREIGN KEY (codfisc) REFERENCES infermiere(codfisc) ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY (codiceosp, fasciainf, giorno) REFERENCES turno(codiceosp, orario, giorno) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE turnazionemed (
+    codfisc VARCHAR(16),
+    codiceosp VARCHAR(5),
+    fasciamed ORA,
+    giorno VARCHAR(10) NOT NULL,
+    PRIMARY KEY(codfisc, codiceosp, fasciamed, giorno),
+FOREIGN KEY (codfisc) REFERENCES medico(codfisc) ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY (codiceosp, fasciamed, giorno) REFERENCES turno(codiceosp, orario, giorno) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE primario (
+    codiceosp VARCHAR(20) NOT NULL,
+    rep VARCHAR(20) NOT NULL,
+	cf VARCHAR(16),
+    PRIMARY KEY (codiceosp, rep, cf),
+    FOREIGN KEY (codiceosp, rep, cf) REFERENCES medico(codiceosp, rep, codfisc) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE viceprimario (
+    codiceosp VARCHAR(20) NOT NULL,
+    rep VARCHAR(20) NOT NULL,
+	cf VARCHAR(16),
+	assunzruolo DATE NOT NULL,
+    PRIMARY KEY (codiceosp, rep, cf),
+    FOREIGN KEY (codiceosp, rep, cf) REFERENCES medico(codiceosp, rep, codfisc) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE specializzazione (
+    codiceosp VARCHAR(20) NOT NULL,
+    rep VARCHAR(20) NOT NULL,
+    cf VARCHAR(16),
+    tipo VARCHAR(50) NOT NULL,
+    PRIMARY KEY (codiceosp, rep, cf, tipo),
+    FOREIGN KEY (codiceosp, rep, cf) REFERENCES primario(codiceosp, rep, cf) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE sostituzione (
+    codiceospvice VARCHAR(20) NOT NULL,
+    repvice VARCHAR(20) NOT NULL,
+    cfvice VARCHAR(16),
+    codiceospmed VARCHAR(20),
+    repmed VARCHAR(20),
+    sostituto VARCHAR(16),
+    datainizio DATE NOT NULL,
+    datafine DATE,
+    PRIMARY KEY (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio),
+    FOREIGN KEY (codiceospvice, repvice, cfvice) REFERENCES viceprimario(codiceosp, rep, cf) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (codiceospmed, repmed, sostituto) REFERENCES primario(codiceosp, rep, cf) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE prenotazione (
+	tessanit VARCHAR(16),
+	nomeamb VARCHAR(20),
+	id VARCHAR(6) UNIQUE,
+	datapren DATE NOT NULL,
+	dataesame DATE NOT NULL,
+	oraesame TIME NOT NULL,
+	urgenza FASCIA,
+	regimecosto COSTO,
+	PRIMARY KEY (tessanit, nomeamb, id),
+	FOREIGN KEY (tessanit) REFERENCES paziente(tesserasanitaria) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (nomeamb) REFERENCES ambulatorio(nomeamb) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE esame (
+	ts VARCHAR(16),
+	pren VARCHAR(6),
+	nomeamb VARCHAR(20) NOT NULL,
+	codesame VARCHAR(10) NOT NULL,
+	descriz VARCHAR(50),
+	PRIMARY KEY (ts, pren, nomeamb, codesame),
+	FOREIGN KEY (ts, pren, nomeamb) REFERENCES prenotazione(tessanit, id, nomeamb)
+);
+
+CREATE TABLE esamespecialistico (
+    cfmed VARCHAR(16),
+    ts VARCHAR(16),
+    pren VARCHAR(6),
+	nomeamb VARCHAR(20),
+    codesame VARCHAR(10),
+    avvertenze VARCHAR(50),
+    PRIMARY KEY (cfmed, ts, nomeamb, pren, codesame),
+    FOREIGN KEY (cfmed) REFERENCES medico(codfisc) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (ts, nomeamb, pren, codesame) REFERENCES esame(ts, nomeamb, pren, codesame) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-------------------------------------------------------------------------
+INSERT INTO ospedale (codosp, nomeosp, indirizzosp, tel) VALUES ('MI1', 'Ospedale Milano Nord', 'Via Fittizia 1', '3201234567');
+INSERT INTO ospedale (codosp, nomeosp, indirizzosp, tel) VALUES ('MI2', 'Ospedale Milano Sud', 'Via Immaginaria 2', '3212345678');
+INSERT INTO ospedale (codosp, nomeosp, indirizzosp, tel) VALUES ('BG1', 'Ospedale Bergamo', 'Via Inesistente 3', '3223456789');
+INSERT INTO ospedale (codosp, nomeosp, indirizzosp, tel) VALUES ('BS1', 'Ospedale Brescia', 'Via Fantasia 4', '3234567890');
+INSERT INTO ospedale (codosp, nomeosp, indirizzosp, tel) VALUES ('CO1', 'Ospedale Como', 'Via Falsa 5', '3245678901');
+INSERT INTO ospedale (codosp, nomeosp, indirizzosp, tel) VALUES ('VA1', 'Ospedale Varese', 'Via Inventata 6', '3256789012');
+INSERT INTO ospedale (codosp, nomeosp, indirizzosp, tel) VALUES ('MN1', 'Ospedale Mantova', 'Via Creativa 7', '3267890123');
+
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('MI1', 'Cardiologia', '3278901234', '10-12');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('MI1', 'Chirurgia', '3289012345', '14-16');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('MI1', 'Pediatria', '3290123456', '16-18');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('MI2', 'Cardiologia', '3301234567', '10-12');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('MI2', 'Oncologia', '3312345678', '14-16');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('MI2', 'Neurologia', '3323456789', '16-18');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('BG1', 'Pediatria', '3334567890', '10-12');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('BG1', 'Chirurgia', '3345678901', '14-16');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('BS1', 'Cardiologia', '3356789012', '10-12');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('BS1', 'Dermatologia', '3367890123', '14-16');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('BS1', 'Pneumologia', '3378901234', '16-18');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('CO1', 'Psichiatria', '3389012345', '10-12');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('CO1', 'Chirurgia', '3390123456', '14-16');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('VA1', 'Cardiologia', '3401234567', '10-12');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('VA1', 'Neurologia', '3412345678', '14-16');
+INSERT INTO reparto (codiceosp, nomerep, telrep, orariovisite) VALUES ('MN1', 'Geriatria', '3423456789', '10-12');
+
+INSERT INTO ambulatorio (nomeamb, tipoamb, pianoamb, indirizzoamb, telamb, oraperturamb) VALUES ('Ossigeno', 'interno', '1', 'Via Fittizia 1', '3434567890', '08:00:00');
+INSERT INTO ambulatorio (nomeamb, tipoamb, pianoamb, indirizzoamb, telamb, oraperturamb) VALUES ('Idrogeno', 'interno', '2', 'Via Immaginaria 2', '3445678901', '09:00:00');
+INSERT INTO ambulatorio (nomeamb, tipoamb, pianoamb, indirizzoamb, telamb, oraperturamb) VALUES ('Carbonio', 'interno', '3', 'Via Inesistente 3', '3456789012', '10:00:00');
+INSERT INTO ambulatorio (nomeamb, tipoamb, pianoamb, indirizzoamb, telamb, oraperturamb) VALUES ('Azoto', 'interno', '4', 'Via Fantasia 4', '3467890123', '11:00:00');
+INSERT INTO ambulatorio (nomeamb, tipoamb, pianoamb, indirizzoamb, telamb, oraperturamb) VALUES ('Fluoro', 'esterno', '1', 'Via Alternativa 1', '3478901234', '08:30:00');
+INSERT INTO ambulatorio (nomeamb, tipoamb, pianoamb, indirizzoamb, telamb, oraperturamb) VALUES ('Elio', 'esterno', '2', 'Via Secondaria 2', '3489012345', '09:30:00');
+INSERT INTO ambulatorio (nomeamb, tipoamb, pianoamb, indirizzoamb, telamb, oraperturamb) VALUES ('Sodio', 'esterno', '3', 'Via Terziaria 3', '3490123456', '10:30:00');
+INSERT INTO ambulatorio (nomeamb, tipoamb, pianoamb, indirizzoamb, telamb, oraperturamb) VALUES ('Ferro', 'esterno', '4', 'Via Quaternaria 4', '3501234567', '11:30:00');
+INSERT INTO ambulatorio (nomeamb, tipoamb, pianoamb, indirizzoamb, telamb, oraperturamb) VALUES ('Magnesio', 'esterno', '5', 'Via Quinquennale 5', '3512345678', '12:00:00');
+
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Ossigeno', 1);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Ossigeno', 2);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Idrogeno', 1);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Carbonio', 1);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Carbonio', 2);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Carbonio', 3);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Azoto', 1);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Azoto', 2);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Fluoro', 1);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Elio', 1);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Sodio', 2);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Ferro', 1);
+INSERT INTO stanzanalisi (nomeamb, numstanza) VALUES ('Magnesio', 1);
+
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('MI1', 'Cardiologia', 301, '3');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('MI1', 'Cardiologia', 302, '3');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('MI1', 'Chirurgia', 401, '4');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('MI1', 'Pediatria', 402, '4'); 
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('MI2', 'Cardiologia', 201, '2');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('MI2', 'Oncologia', 202, '2');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('MI2', 'Neurologia', 301, '3');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('BG1', 'Pediatria', 101, '1');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('BG1', 'Chirurgia', 201, '2');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('BG1', 'Chirurgia', 202, '2');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('BS1', 'Cardiologia', 101, '1');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('BS1', 'Dermatologia', 201, '2');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('BS1', 'Pneumologia', 301, '3');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('CO1', 'Psichiatria', 101, '1');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('CO1', 'Chirurgia', 201, '2');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('CO1', 'Chirurgia', 202, '2');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('VA1', 'Cardiologia', 101, '1');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('VA1', 'Neurologia', 201, '2');
+INSERT INTO stanzaricovero (codiceosp, nomerep, numstanza, piano) VALUES ('MN1', 'Geriatria', 101, '1');
+
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('MI1', 'Cardiologia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('MI1', 'Chirurgia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('MI1', 'Chirurgia', 2);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('MI1', 'Pediatria', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('MI2', 'Cardiologia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('MI2', 'Oncologia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('MI2', 'Oncologia', 2);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('MI2', 'Neurologia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('BG1', 'Pediatria', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('BG1', 'Chirurgia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('BG1', 'Chirurgia', 2);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('BS1', 'Cardiologia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('BS1', 'Dermatologia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('BS1', 'Dermatologia', 2);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('BS1', 'Pneumologia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('CO1', 'Psichiatria', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('CO1', 'Chirurgia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('CO1', 'Chirurgia', 2);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('VA1', 'Cardiologia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('VA1', 'Neurologia', 1);
+INSERT INTO salaoperatoria (codiceosp, nomereparto, numsala) VALUES ('MN1', 'Geriatria', 1);
+
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('MI1', 'Cardiologia', 301, 1, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('MI1', 'Cardiologia', 301, 2, 'occupato');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('MI1', 'Chirurgia', 401, 1, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('MI1', 'Pediatria', 402, 1, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('MI2', 'Cardiologia', 201, 1, 'occupato');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('MI2', 'Cardiologia', 201, 2, 'occupato');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('MI2', 'Oncologia', 202, 1, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('MI2', 'Oncologia', 202, 2, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('MI2', 'Neurologia', 301, 1, 'occupato');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('BG1', 'Pediatria', 101, 1, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('BG1', 'Chirurgia', 201, 1, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('BG1', 'Chirurgia', 201, 2, 'occupato');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('BS1', 'Cardiologia', 101, 1, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('BS1', 'Dermatologia', 201, 1, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('BS1', 'Dermatologia', 201, 2, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('BS1', 'Pneumologia', 301, 1, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('CO1', 'Psichiatria', 101, 1, 'occupato');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('CO1', 'Chirurgia', 201, 1, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('CO1', 'Chirurgia', 201, 2, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('VA1', 'Cardiologia', 101, 1, 'libero');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('VA1', 'Neurologia', 201, 1, 'occupato');
+INSERT INTO letto (codiceosp, nomereparto, numstanza, numletto, statoletto) VALUES ('MN1', 'Geriatria', 101, 1, 'libero');
+
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('RSSMRA50A01H501U', 'Maria', 'Rossi', 73, '01/01/1950', '3523456789', 'Via Rosa 1', 'Milano', '12/05/2023');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('BNCRBR25C12H501K', 'Roberto', 'Bianchi', 99, '12/03/1925', '3534567890', 'Via Tulipano 5', 'Bergamo', NULL);
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('VRDGSP10D25H501L', 'Giuseppe', 'Verdi', 13, '25/04/2010', '3545678901', 'Via Margherita 12', 'Brescia', '30/06/2024');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('BLUSTF75E17H501T', 'Stefano', 'Blu', 49, '17/05/1975', '3556789012', 'Via Girasole 7', 'Como', NULL);
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('FRRLGI55F20H501V', 'Luigi', 'Ferrari', 69, '20/06/1955', '3567890123', 'Via Fiordaliso 9', 'Varese', '10/04/2023');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('BRTCRL90G13H501W', 'Carlo', 'Bertoli', 33, '13/07/1990', '3578901234', 'Via Iris 4', 'Mantova', '28/02/2024');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('RCCGVN40H29H501X', 'Giovanni', 'Ricci', 83, '29/08/1940', '3589012345', 'Via Dalia 2', 'Milano', '05/06/2023');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('NGRRBR11I12H501Y', 'Roberta', 'Negri', 12, '12/09/2011', '3590123456', 'Via Gerbera 14', 'Bergamo', NULL);
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('MRNLCT55L25H501Z', 'Lucetta', 'Marinelli', 69, '25/10/1955', '3601234567', 'Via Magnolia 16', 'Brescia', '11/12/2023');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('BNCLRA85M07H501A', 'Laura', 'Bianchi', 38, '07/12/1985', '3612345678', 'Via Rosa 8', 'Como', '25/07/2023');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('BLUSMN30A13H501B', 'Simona', 'Blu', 94, '13/01/1930', '3623456789', 'Via Tulipano 18', 'Varese', NULL);
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('VRDPTR15B22H501C', 'Pietro', 'Verdi', 9, '22/02/2015', '3634567890', 'Via Margherita 20', 'Mantova', '04/11/2023');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('RCCMRN55C18H501D', 'Marina', 'Ricci', 69, '18/03/1955', '3645678901', 'Via Girasole 10', 'Milano', '07/01/2023');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('FRRGCM85D09H501E', 'Giacomo', 'Ferrari', 39, '09/04/1985', '3656789012', 'Via Fiordaliso 6', 'Bergamo', NULL);
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('BRTCRL05E14H501F', 'Carla', 'Bertoli', 19, '14/05/2005', '3667890123', 'Via Iris 15', 'Brescia', '15/09/2023');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('RSSMRA60F12H501G', 'Marco', 'Rossi', 64, '12/06/1960', '3678901234', 'Via Dalia 19', 'Como', '21/03/2023');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('BLUSFN45G20H501H', 'Stefania', 'Blu', 78, '20/07/1945', '3689012345', 'Via Rosa 21', 'Varese', NULL);
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('BNCRSN32H15H501I', 'Rosanna', 'Bianchi', 92, '15/08/1932', '3690123456', 'Via Tulipano 22', 'Mantova', '19/10/2023');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('VRDPRA28I04H501J', 'Piera', 'Verdi', 45, '04/09/1978', '3701234567', 'Via Margherita 24', 'Milano', '16/05/2023');
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('RCCGVN37J11H501K', 'Giovanna', 'Ricci', 86, '11/10/1937', '3712345678', 'Via Girasole 26', 'Bergamo', NULL);
+INSERT INTO paziente (tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, telpaz, indirizzopaz, città, datadimiss) VALUES ('FRRLGN47K05H501L', 'Luigino', 'Ferrari', 77, '05/11/1947', '3723456789', 'Via Fiordaliso 28', 'Brescia', '12/12/2023');
+
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BG1', 'Chirurgia', '201', '1', 'RSSMRA50A01H501U', 'R001', '10/01/2023', '12/05/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BG1', 'Chirurgia', '201', '2', 'RSSMRA50A01H501U', 'R002', '01/04/2022', '01/08/2022');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BG1', 'Pediatria', '101', '1', 'BNCRBR25C12H501K', 'R003', '05/03/2024', NULL);
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BS1', 'Cardiologia', '101', '1', 'BNCRBR25C12H501K', 'R004', '15/08/2022', '20/10/2022');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BS1', 'Dermatologia', '201', '1', 'VRDGSP10D25H501L', 'R005', '15/06/2024', '30/06/2024');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BS1', 'Dermatologia', '201', '2', 'BLUSTF75E17H501T', 'R006', '20/12/2023', NULL);
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BS1', 'Pneumologia', '301', '1', 'FRRLGI55F20H501V', 'R007', '15/01/2023', '10/04/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('CO1', 'Chirurgia', '201', '1', 'FRRLGI55F20H501V', 'R008', '05/11/2022', '15/12/2022');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('CO1', 'Chirurgia', '201', '2', 'BRTCRL90G13H501W', 'R009', '15/01/2024', '28/02/2024');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('CO1', 'Psichiatria', '101', '1', 'RCCGVN40H29H501X', 'R010', '01/03/2023', '05/06/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MI1', 'Cardiologia', '301', '1', 'RCCGVN40H29H501X', 'R011', '10/06/2022', '15/09/2022');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MI1', 'Cardiologia', '301', '2', 'NGRRBR11I12H501Y', 'R012', '01/07/2023', NULL);
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MI1', 'Chirurgia', '401', '1', 'MRNLCT55L25H501Z', 'R013', '01/09/2023', '11/12/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MI1', 'Pediatria', '402', '1', 'MRNLCT55L25H501Z', 'R014', '05/02/2022', '15/05/2022');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MI2', 'Cardiologia', '201', '1', 'BNCLRA85M07H501A', 'R015', '10/05/2023', '25/07/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MI2', 'Cardiologia', '201', '2', 'BNCLRA85M07H501A', 'R016', '01/08/2022', '15/11/2022');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MI2', 'Neurologia', '301', '1', 'BLUSMN30A13H501B', 'R017', '01/06/2023', NULL);
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MI2', 'Oncologia', '202', '1', 'VRDPTR15B22H501C', 'R018', '01/09/2023', '04/11/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MI2', 'Oncologia', '202', '2', 'RCCMRN55C18H501D', 'R019', '01/04/2023', '07/01/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MN1', 'Geriatria', '101', '1', 'FRRGCM85D09H501E', 'R020', '01/02/2023', NULL);
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('VA1', 'Cardiologia', '101', '1', 'BRTCRL05E14H501F', 'R021', '01/07/2023', '15/09/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('VA1', 'Neurologia', '201', '1', 'BRTCRL05E14H501F', 'R022', '01/12/2022', '15/03/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BG1', 'Chirurgia', '201', '2', 'RSSMRA60F12H501G', 'R023', '01/01/2023', '21/03/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BG1', 'Pediatria', '101', '1', 'RSSMRA60F12H501G', 'R024', '15/04/2022', '10/08/2022');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MI1', 'Chirurgia', '401', '1', 'BLUSFN45G20H501H', 'R025', '01/02/2024', NULL);
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BS1', 'Pneumologia', '301', '1', 'BLUSFN45G20H501H', 'R026', '10/10/2022', '15/12/2022');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BS1', 'Pneumologia', '301', '1', 'BNCRSN32H15H501I', 'R027', '01/08/2023', '19/10/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MI2', 'Neurologia', '301', '1', 'VRDPRA28I04H501J', 'R028', '01/01/2023', '16/05/2023');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('BS1', 'Cardiologia', '101', '1', 'VRDPRA28I04H501J', 'R029', '15/06/2022', '15/09/2022');
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('CO1', 'Chirurgia', '201', '1', 'RCCGVN37J11H501K', 'R030', '01/11/2023', NULL);
+INSERT INTO ricovero (codiceosp, nomereparto, numstanza, numletto, tessanit, id, datainizio, datafine) VALUES ('MN1', 'Geriatria', '101', '1', 'FRRLGN47K05H501L', 'R031', '01/07/2024', NULL);
+
+INSERT INTO patologia (nome) VALUES ('Infarto miocardico');
+INSERT INTO patologia (nome) VALUES ('Aritmia cardiaca');
+INSERT INTO patologia (nome) VALUES ('Stenosi aortica');
+INSERT INTO patologia (nome) VALUES ('Ernia inguinale');
+INSERT INTO patologia (nome) VALUES ('Appendicite');
+INSERT INTO patologia (nome) VALUES ('Frattura ossea');
+INSERT INTO patologia (nome) VALUES ('Carcinoma mammario');
+INSERT INTO patologia (nome) VALUES ('Leucemia');
+INSERT INTO patologia (nome) VALUES ('Linfoma di Hodgkin');
+INSERT INTO patologia (nome) VALUES ('Asma bronchiale');
+INSERT INTO patologia (nome) VALUES ('Polmonite');
+INSERT INTO patologia (nome) VALUES ('Bronchite cronica');
+INSERT INTO patologia (nome) VALUES ('Dermatite atopica');
+INSERT INTO patologia (nome) VALUES ('Psoriasi');
+INSERT INTO patologia (nome) VALUES ('Eczema');
+INSERT INTO patologia (nome) VALUES ('Alzheimer');
+INSERT INTO patologia (nome) VALUES ('Morbo di Parkinson');
+INSERT INTO patologia (nome) VALUES ('Epilessia');
+INSERT INTO patologia (nome) VALUES ('Disturbo bipolare');
+
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('RSSMRA50A01H501U', 'Infarto miocardico');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('BNCRBR25C12H501K', 'Aritmia cardiaca');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('VRDGSP10D25H501L', 'Asma bronchiale');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('BLUSTF75E17H501T', 'Appendicite');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('FRRLGI55F20H501V', 'Carcinoma mammario');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('BRTCRL90G13H501W', 'Leucemia');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('RCCGVN40H29H501X', 'Morbo di Parkinson');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('NGRRBR11I12H501Y', 'Dermatite atopica');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('MRNLCT55L25H501Z', 'Linfoma di Hodgkin');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('BNCLRA85M07H501A', 'Bronchite cronica');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('BLUSMN30A13H501B', 'Stenosi aortica');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('VRDPTR15B22H501C', 'Epilessia');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('RCCMRN55C18H501D', 'Polmonite');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('FRRGCM85D09H501E', 'Psoriasi');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('BRTCRL05E14H501F', 'Frattura ossea');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('RSSMRA60F12H501G', 'Aritmia cardiaca');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('BLUSFN45G20H501H', 'Alzheimer');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('BNCRSN32H15H501I', 'Infarto miocardico');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('VRDPRA28I04H501J', 'Eczema');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('RCCGVN37J11H501K', 'Disturbo bipolare');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('FRRLGN47K05H501L', 'Infarto miocardico');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('FRRLGN47K05H501L', 'Morbo di Parkinson');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('RSSMRA50A01H501U', 'Stenosi aortica');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('BNCRBR25C12H501K', 'Frattura ossea');
+INSERT INTO diagnosi (tessanit, malattia) VALUES ('BLUSFN45G20H501H', 'Psoriasi');
+
+INSERT INTO prontosoccorso (codiceosp, nomeps) VALUES ('MI1', 'Pronto Soccorso Centrale Milano');
+INSERT INTO prontosoccorso (codiceosp, nomeps) VALUES ('BG1', 'Pronto Soccorso Bergamo Est');
+INSERT INTO prontosoccorso (codiceosp, nomeps) VALUES ('BS1', 'Pronto Soccorso Brescia Nord');
+INSERT INTO prontosoccorso (codiceosp, nomeps) VALUES ('VA1', 'Pronto Soccorso Varese Ovest');
+
+INSERT INTO personaleammin VALUES ('BG1', 'Chirurgia', 'AAAAAAAAAAAAAAA1', 'Andrea', 'Rossi', '3734567890', 'A');
+INSERT INTO personaleammin VALUES ('BS1', 'Dermatologia', 'AAAAAAAAAAAAAAA2', 'Carlo', 'Verdi', '3745678901', 'B');
+INSERT INTO personaleammin VALUES ('CO1', 'Psichiatria', 'AAAAAAAAAAAAAAA3', 'Daniele', 'Gialli', '3756789012', 'C');
+INSERT INTO personaleammin VALUES ('MI1', 'Cardiologia', 'AAAAAAAAAAAAAAA4', 'Erica', 'Blu', '3767890123', 'A');
+INSERT INTO personaleammin VALUES ('MI2', 'Oncologia', 'AAAAAAAAAAAAAAA5', 'Francesca', 'Neri', '3778901234', 'B');
+INSERT INTO personaleammin VALUES ('MN1', 'Geriatria', 'AAAAAAAAAAAAAAA6', 'Giulio', 'Bruni', '3789012345', 'C');
+INSERT INTO personaleammin VALUES ('VA1', 'Neurologia', 'AAAAAAAAAAAAAAA7', 'Luca', 'Azzurri', '3790123456', 'A');
+INSERT INTO personaleammin VALUES ('BG1', 'Chirurgia', 'AAAAAAAAAAAAAAA8', 'Mattia', 'Grigi', '3801234567', 'B');
+INSERT INTO personaleammin VALUES ('MI1', 'Pediatria', 'AAAAAAAAAAAAAAA9', 'Paola', 'Arancioni', '3812345678', 'C');
+INSERT INTO personaleammin VALUES ('VA1', 'Cardiologia', 'AAAAAAAAAAAAAA10', 'Valentina', 'Viola', '3823456789', 'C');
+
+INSERT INTO infermiere (codiceosp, rep, codfisc, nome, cognome, tel, tipo) VALUES ('BG1', 'Chirurgia', 'RSSMRA80A01H502U', 'Anna', 'Rossi', '1234567890', 'sanità pubblica');
+INSERT INTO infermiere (codiceosp, rep, codfisc, nome, cognome, tel, tipo) VALUES ('BS1', 'Cardiologia', 'BNCLRA85M07H503A', 'Luca', 'Bianchi', '0987654321', 'pediatria');
+INSERT INTO infermiere (codiceosp, rep, codfisc, nome, cognome, tel, tipo) VALUES ('CO1', 'Psichiatria', 'VRDGSP60D25H504L', 'Giulia', 'Verdi', '1122334455', 'psichiatria');
+INSERT INTO infermiere (codiceosp, rep, codfisc, nome, cognome, tel, tipo) VALUES ('MI1', 'Cardiologia', 'FRRLGN55F20H505V', 'Carlo', 'Ferrari', '5566778899', 'area critica');
+INSERT INTO infermiere (codiceosp, rep, codfisc, nome, cognome, tel, tipo) VALUES ('MI2', 'Neurologia', 'BLUSFN45G20H506H', 'Silvia', 'Blu', '6677889900', 'geriatria');
+INSERT INTO infermiere (codiceosp, rep, codfisc, nome, cognome, tel, tipo) VALUES ('MN1', 'Geriatria', 'RSSMRA80A01H507U', 'Elena', 'Rossi', '1234567890', 'sanità pubblica');
+INSERT INTO infermiere (codiceosp, rep, codfisc, nome, cognome, tel, tipo) VALUES ('VA1', 'Cardiologia', 'BNCLRA85M07H508A', 'Giovanni', 'Bianchi', '0987654321', 'pediatria');
+INSERT INTO infermiere (codiceosp, rep, codfisc, nome, cognome, tel, tipo) VALUES ('BG1', 'Pediatria', 'VRDGSP60D25H509L', 'Chiara', 'Verdi', '1122334455', 'psichiatria');
+INSERT INTO infermiere (codiceosp, rep, codfisc, nome, cognome, tel, tipo) VALUES ('BS1', 'Dermatologia', 'FRRLGN55F20H510V', 'Andrea', 'Ferrari', '5566778899', 'area critica');
+INSERT INTO infermiere (codiceosp, rep, codfisc, nome, cognome, tel, tipo) VALUES ('MI1', 'Pediatria', 'BLUSFN45G20H511H', 'Martina', 'Blu', '6677889900', 'geriatria');
+
+INSERT INTO medico (codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('BG1', 'Chirurgia', 'RSSMRA55F20H510V', 'Mario', 'Rossi', '1234566890', 3);
+INSERT INTO medico (codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('BS1', 'Pneumologia', 'BNCLGU85M07H508A', 'Luigi', 'Bianchi', '0989654321', 4);
+INSERT INTO medico (codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('CO1', 'Chirurgia', 'VRDGBR45G20H506H', 'Gabriele', 'Verdi', '1182334455', 2);
+INSERT INTO medico (codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('MI1', 'Chirurgia', 'FRRCLT60D25H504L', 'Carlotta', 'Ferrari', '9566778899', 5);
+INSERT INTO medico (codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('MI2', 'Neurologia', 'BLUGVN80A01H502U', 'Giovanni', 'Blu', '6677889100', 1);
+INSERT INTO medico (codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('MN1', 'Geriatria', 'RSSLRA85M07H503A', 'Laura', 'Rossi', '1234560890', 3);
+INSERT INTO medico (codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('VA1', 'Neurologia', 'BNCPLA55F20H505V', 'Paolo', 'Bianchi', '0987655321', NULL);
+INSERT INTO medico (codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('MI2', 'Oncologia', 'VRDNNA80A01H507U', 'Anna', 'Verdi', '1022334455', 4);
+INSERT INTO medico (codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('BS1', 'Cardiologia', 'FRRMRC60D25H509L', 'Marco', 'Ferrari', '5566748899', NULL);
+INSERT INTO medico (codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('VA1', 'Cardiologia', 'BLULSE45G20H511H', 'Elisa', 'Blu', '6677589900', 2);
+INSERT INTO medico(codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('MI2', 'Neurologia', 'GTTLFR73C09R309K', 'Alfredo', 'Gatti', '3745678901', '1');
+INSERT INTO medico(codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('MI2', 'Neurologia', 'LNEMRC76D08T209L', 'Marco', 'Leoni', '3756789012', '1');
+INSERT INTO medico(codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('MI1', 'Chirurgia', 'SRACNA67U07D205F', 'Sara', 'Cani', '3767890123', '2');
+INSERT INTO medico(codiceosp, rep, codfisc, nome, cognome, tel, anzianità) VALUES ('MI1', 'Chirurgia', 'PSCGLU68K09F204I', 'Giulia', 'Pesci', '3778901234', '2');
+
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BG1', '6-14', 'lunedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BG1', '14-22', 'lunedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BG1', '22-6', 'lunedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BG1', '6-14', 'martedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BG1', '14-22', 'martedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BS1', '6-14', 'mercoledi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BS1', '14-22', 'mercoledi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BS1', '22-6', 'mercoledi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BS1', '6-14', 'giovedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BS1', '14-22', 'giovedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('MI1', '6-14', 'venerdi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('MI1', '14-22', 'venerdi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('MI1', '22-6', 'venerdi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('MI1', '6-14', 'sabato');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('MI1', '14-22', 'sabato');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('VA1', '6-14', 'domenica');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('VA1', '14-22', 'domenica');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('VA1', '22-6', 'domenica');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('VA1', '6-14', 'lunedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('VA1', '14-22', 'lunedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('MI1', '22-6', 'sabato');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BS1', '22-6', 'giovedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('BG1', '22-6', 'martedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('VA1', '14-22', 'martedi');
+INSERT INTO turno (codiceosp, orario, giorno) VALUES ('VA1', '6-14', 'mercoledi');
+
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('BLUSFN45G20H506H', 'BG1', '6-14', 'lunedi');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('VRDGSP60D25H509L', 'BG1', '14-22', 'martedi');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('RSSMRA80A01H502U', 'BS1', '22-6', 'giovedi');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('BLUSFN45G20H511H', 'MI1', '6-14', 'sabato');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('RSSMRA80A01H507U', 'VA1', '14-22', 'domenica');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('VRDGSP60D25H504L', 'BG1', '22-6', 'lunedi');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('BNCLRA85M07H503A', 'BS1', '6-14', 'mercoledi');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('VRDGSP60D25H509L', 'MI1', '14-22', 'venerdi');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('RSSMRA80A01H507U', 'VA1', '14-22', 'martedi');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('FRRLGN55F20H510V', 'BG1', '6-14', 'martedi');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('BNCLRA85M07H503A', 'BS1', '14-22', 'giovedi');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('BNCLRA85M07H508A', 'MI1', '22-6', 'sabato');
+INSERT INTO turnazioneinf (codfisc, codiceosp, fasciainf, giorno) VALUES ('FRRLGN55F20H505V', 'VA1', '6-14', 'lunedi');
+
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('RSSMRA55F20H510V', 'BG1', '6-14', 'lunedi');
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('BNCLGU85M07H508A', 'BS1', '14-22', 'mercoledi');
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('VRDGBR45G20H506H', 'VA1', '22-6', 'domenica');
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('FRRCLT60D25H504L', 'MI1', '6-14', 'venerdi');
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('BLUGVN80A01H502U', 'BG1', '14-22', 'martedi');
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('RSSLRA85M07H503A', 'BS1', '22-6', 'giovedi');
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('BNCPLA55F20H505V', 'VA1', '6-14', 'mercoledi');
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('VRDNNA80A01H507U', 'MI1', '14-22', 'venerdi');
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('FRRMRC60D25H509L', 'BS1', '22-6', 'giovedi');
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('BLULSE45G20H511H', 'VA1', '14-22', 'lunedi');
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('BLUGVN80A01H502U', 'MI1', '14-22', 'sabato');
+INSERT INTO turnazionemed (codfisc, codiceosp, fasciamed, giorno) VALUES ('RSSMRA55F20H510V', 'BG1', '22-6', 'martedi');
+
+INSERT INTO primario (codiceosp, rep, cf) VALUES ('BG1', 'Chirurgia', 'RSSMRA55F20H510V');
+INSERT INTO primario (codiceosp, rep, cf) VALUES ('BS1', 'Pneumologia', 'BNCLGU85M07H508A');
+INSERT INTO primario (codiceosp, rep, cf) VALUES ('MI1', 'Chirurgia', 'FRRCLT60D25H504L');
+INSERT INTO primario (codiceosp, rep, cf) VALUES ('MI2', 'Oncologia', 'VRDNNA80A01H507U');
+INSERT INTO primario (codiceosp, rep, cf) VALUES ('VA1', 'Neurologia', 'BNCPLA55F20H505V');
+INSERT INTO primario (codiceosp, rep, cf) VALUES ('MI2', 'Neurologia', 'GTTLFR73C09R309K');
+INSERT INTO primario (codiceosp, rep, cf) VALUES ('MI1', 'Chirurgia', 'SRACNA67U07D205F');
+
+INSERT INTO viceprimario (codiceosp, rep, cf, assunzruolo) VALUES ('BS1', 'Cardiologia', 'FRRMRC60D25H509L', '15/03/2020');
+INSERT INTO viceprimario (codiceosp, rep, cf, assunzruolo) VALUES ('CO1', 'Chirurgia', 'VRDGBR45G20H506H', '22/07/2018');
+INSERT INTO viceprimario (codiceosp, rep, cf, assunzruolo) VALUES ('MI2', 'Neurologia', 'BLUGVN80A01H502U', '10/01/2019');
+INSERT INTO viceprimario (codiceosp, rep, cf, assunzruolo) VALUES ('MN1', 'Geriatria', 'RSSLRA85M07H503A', '05/05/2021');
+INSERT INTO viceprimario (codiceosp, rep, cf, assunzruolo) VALUES ('VA1', 'Cardiologia', 'BLULSE45G20H511H', '12/11/2022');
+INSERT INTO viceprimario(codiceosp, rep, cf, assunzruolo) VALUES ('MI2', 'Neurologia', 'LNEMRC76D08T209L', '04/07/2022');
+INSERT INTO viceprimario(codiceosp, rep, cf, assunzruolo) VALUES ('MI1', 'Chirurgia', 'PSCGLU68K09F204I', '05/07/2022');
+
+INSERT INTO specializzazione (codiceosp, rep, cf, tipo) VALUES ('BG1', 'Chirurgia', 'RSSMRA55F20H510V', 'Chirurgia');
+INSERT INTO specializzazione (codiceosp, rep, cf, tipo) VALUES ('BS1', 'Pneumologia', 'BNCLGU85M07H508A', 'Pneumologia');
+INSERT INTO specializzazione (codiceosp, rep, cf, tipo) VALUES ('MI1', 'Chirurgia', 'FRRCLT60D25H504L', 'Chirurgia');
+INSERT INTO specializzazione (codiceosp, rep, cf, tipo) VALUES ('MI2', 'Oncologia', 'VRDNNA80A01H507U', 'Oncologia'); 
+INSERT INTO specializzazione (codiceosp, rep, cf, tipo) VALUES ('VA1', 'Neurologia', 'BNCPLA55F20H505V', 'Neurologia');
+INSERT INTO specializzazione (codiceosp, rep, cf, tipo) VALUES ('BG1', 'Chirurgia', 'RSSMRA55F20H510V', 'Cardiologia');
+INSERT INTO specializzazione (codiceosp, rep, cf, tipo) VALUES ('MI2', 'Oncologia', 'VRDNNA80A01H507U', 'Pediatria');
+INSERT INTO specializzazione (codiceosp, rep, cf, tipo) VALUES ('MI2', 'Neurologia', 'GTTLFR73C09R309K', 'Neurologia');
+INSERT INTO specializzazione (codiceosp, rep, cf, tipo) VALUES ('MI1', 'Chirurgia', 'SRACNA67U07D205F', 'Chirurgia');
+
+INSERT INTO sostituzione (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio, datafine) VALUES ('BS1', 'Cardiologia', 'FRRMRC60D25H509L', 'BG1', 'Chirurgia', 'RSSMRA55F20H510V', '01/01/2023', '15/01/2023');
+INSERT INTO sostituzione (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio, datafine) VALUES ('CO1', 'Chirurgia', 'VRDGBR45G20H506H', 'BS1', 'Pneumologia', 'BNCLGU85M07H508A', '05/02/2023', '20/02/2023');
+INSERT INTO sostituzione (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio, datafine) VALUES ('MI2', 'Neurologia', 'BLUGVN80A01H502U', 'MI1', 'Chirurgia', 'FRRCLT60D25H504L', '10/03/2023', '25/03/2023');
+INSERT INTO sostituzione (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio, datafine) VALUES ('MN1', 'Geriatria', 'RSSLRA85M07H503A', 'MI2', 'Oncologia', 'VRDNNA80A01H507U', '15/04/2023', '30/04/2023');
+INSERT INTO sostituzione (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio, datafine) VALUES ('VA1', 'Cardiologia', 'BLULSE45G20H511H', 'VA1', 'Neurologia', 'BNCPLA55F20H505V', '20/05/2024', null);
+INSERT INTO sostituzione (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio, datafine) VALUES ('CO1', 'Chirurgia', 'VRDGBR45G20H506H', 'BG1', 'Chirurgia', 'RSSMRA55F20H510V', '01/01/2024', null);
+INSERT INTO sostituzione (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio, datafine) VALUES ('MN1', 'Geriatria', 'RSSLRA85M07H503A', 'VA1', 'Neurologia', 'BNCPLA55F20H505V', '20/05/2024', null);
+INSERT INTO sostituzione (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio, datafine) VALUES ('VA1', 'Cardiologia', 'BLULSE45G20H511H', 'BG1', 'Chirurgia', 'RSSMRA55F20H510V', '01/01/2023', '15/01/2023');
+INSERT INTO sostituzione (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio, datafine) VALUES ('MI2', 'Neurologia', 'LNEMRC76D08T209L', 'MI2', 'Neurologia', 'GTTLFR73C09R309K', '02/02/2023', '15/02/2023');
+INSERT INTO sostituzione (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio, datafine) VALUES ('MI1', 'Chirurgia', 'PSCGLU68K09F204I', 'MI1', 'Chirurgia', 'SRACNA67U07D205F', '02/02/2023', '15/02/2023');
+INSERT INTO sostituzione (codiceospvice, repvice, cfvice, codiceospmed, repmed, sostituto, datainizio, datafine) VALUES ('MI1', 'Chirurgia', 'PSCGLU68K09F204I', 'MI1', 'Chirurgia', 'SRACNA67U07D205F', '03/03/2023', '15/03/2023'); 
+ 								
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('RSSMRA50A01H501U', 'Ossigeno', 'PRN001', '01/01/2024', '15/01/2024', '09:00:00', 'verde', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('BNCRBR25C12H501K', 'Idrogeno', 'PRN002', '05/01/2024', '20/01/2024', '10:00:00', 'gialla', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('VRDGSP10D25H501L', 'Carbonio', 'PRN003', '10/01/2024', '25/01/2024', '11:00:00', 'rossa', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('BLUSTF75E17H501T', 'Azoto', 'PRN004', '15/01/2024', '30/01/2024', '12:00:00', 'verde', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('FRRLGI55F20H501V', 'Ferro', 'PRN005', '20/01/2024', '05/02/2024', '13:00:00', 'gialla', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('BRTCRL90G13H501W', 'Elio', 'PRN006', '25/01/2024', '10/02/2024', '14:00:00', 'rossa', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('RCCGVN40H29H501X', 'Sodio', 'PRN007', '30/01/2024', '15/02/2024', '15:00:00', 'verde', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('NGRRBR11I12H501Y', 'Elio', 'PRN008', '05/02/2024', '20/02/2024', '16:00:00', 'gialla', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('MRNLCT55L25H501Z', 'Ossigeno', 'PRN009', '10/02/2024', '25/02/2024', '17:00:00', 'rossa', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('BNCLRA85M07H501A', 'Ossigeno', 'PRN010', '15/02/2024', '01/03/2024', '09:00:00', 'verde', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('BLUSMN30A13H501B', 'Idrogeno', 'PRN011', '20/02/2024', '05/03/2024', '10:00:00', 'gialla', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('VRDPTR15B22H501C', 'Carbonio', 'PRN012', '25/02/2024', '10/03/2024', '11:00:00', 'rossa', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('RCCMRN55C18H501D', 'Azoto', 'PRN013', '01/03/2024', '15/03/2024', '12:00:00', 'verde', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('FRRGCM85D09H501E', 'Ferro', 'PRN014', '05/03/2024', '20/03/2024', '13:00:00', 'gialla', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('BRTCRL05E14H501F', 'Fluoro', 'PRN015', '10/03/2024', '25/03/2024', '14:00:00', 'rossa', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('RSSMRA60F12H501G', 'Sodio', 'PRN016', '15/03/2024', '30/03/2024', '15:00:00', 'verde', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('BLUSFN45G20H501H', 'Fluoro', 'PRN017', '20/03/2024', '05/04/2024', '16:00:00', 'gialla', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('BNCRSN32H15H501I', 'Idrogeno', 'PRN018', '25/03/2024', '10/04/2024', '17:00:00', 'rossa', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('VRDPRA28I04H501J', 'Ossigeno', 'PRN019', '01/04/2024', '15/04/2024', '09:00:00', 'verde', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('RCCGVN37J11H501K', 'Idrogeno', 'PRN020', '05/04/2024', '20/04/2024', '10:00:00', 'gialla', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('FRRLGN47K05H501L', 'Azoto', 'PRN021', '10/04/2024', '25/04/2024', '11:00:00', 'rossa', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('BRTCRL90G13H501W', 'Carbonio', 'PRN022', '15/04/2024', '30/04/2024', '12:00:00', 'verde', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('NGRRBR11I12H501Y', 'Ferro', 'PRN023', '20/04/2024', '05/05/2024', '13:00:00', 'gialla', 'ssn');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('MRNLCT55L25H501Z', 'Sodio', 'PRN024', '25/04/2024', '10/05/2024', '14:00:00', 'rossa', 'privato');
+INSERT INTO prenotazione (tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto) VALUES ('BLUSMN30A13H501B', 'Ossigeno', 'PRN025', '01/05/2024', '15/05/2024', '15:00:00', 'verde', 'ssn');
+
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('RSSMRA50A01H501U', 'PRN001', 'Ossigeno', 'E001', 'Esame per aritmia');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('BNCRBR25C12H501K', 'PRN002', 'Idrogeno', 'E002', 'Esame per bronchite');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('VRDGSP10D25H501L', 'PRN003', 'Carbonio', 'E003', 'Esame per diabete');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('BLUSTF75E17H501T', 'PRN004', 'Azoto', 'E004', 'Esame per epilessia');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('FRRLGI55F20H501V', 'PRN005', 'Ferro', 'E005', 'Esame per febbre');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('BRTCRL90G13H501W', 'PRN006', 'Elio', 'E006', 'Esame per gastrite');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('RCCGVN40H29H501X', 'PRN007', 'Sodio', 'E007', 'Esame per influenza');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('NGRRBR11I12H501Y', 'PRN008', 'Elio', 'E008', 'Esame per lebbra');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('MRNLCT55L25H501Z', 'PRN009', 'Ossigeno', 'E009', 'Esame per malaria');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('BNCLRA85M07H501A', 'PRN010', 'Ossigeno', 'E010', 'Esame per nausea');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('BLUSMN30A13H501B', 'PRN011', 'Idrogeno', 'E011', 'Esame per orticaria');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('VRDPTR15B22H501C', 'PRN012', 'Carbonio', 'E012', 'Esame per polmonite');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('RCCMRN55C18H501D', 'PRN013', 'Azoto', 'E013', 'Esame per sinusite');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('FRRGCM85D09H501E', 'PRN014', 'Ferro', 'E014', 'Esame per tubercolosi');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('BRTCRL05E14H501F', 'PRN015', 'Fluoro', 'E015', 'Esame per ulcera');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('RSSMRA60F12H501G', 'PRN016', 'Sodio', 'E016', 'Esame per varicella');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('BLUSFN45G20H501H', 'PRN017', 'Fluoro', 'E017', 'Esame per aritmia');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('BNCRSN32H15H501I', 'PRN018', 'Idrogeno', 'E018', 'Esame per bronchite');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('VRDPRA28I04H501J', 'PRN019', 'Ossigeno', 'E019', 'Esame per diabete');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('RCCGVN37J11H501K', 'PRN020', 'Idrogeno', 'E020', 'Esame per epilessia');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('FRRLGN47K05H501L', 'PRN021', 'Azoto', 'E021', 'Esame per febbre');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('BRTCRL90G13H501W', 'PRN022', 'Carbonio', 'E022', 'Esame per gastrite');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('NGRRBR11I12H501Y', 'PRN023', 'Ferro', 'E023', 'Esame per influenza');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('MRNLCT55L25H501Z', 'PRN024', 'Sodio', 'E024', 'Esame per lebbra');
+INSERT INTO esame (ts, pren, nomeamb, codesame, descriz) VALUES ('BLUSMN30A13H501B', 'PRN025', 'Ossigeno', 'E025', 'Esame per malaria');
+
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('RSSMRA55F20H510V', 'RSSMRA50A01H501U', 'Ossigeno', 'PRN001', 'E001', 'Digiuno di 8 ore');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('FRRMRC60D25H509L', 'BNCRBR25C12H501K', 'Idrogeno', 'PRN002', 'E002', 'Bere molta acqua');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('BNCLGU85M07H508A', 'VRDGSP10D25H501L', 'Carbonio', 'PRN003', 'E003', 'Raccogliere la prima urina del mattino');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('VRDGBR45G20H506H', 'BLUSTF75E17H501T', 'Azoto', 'PRN004', 'E004', 'Rimuovere oggetti metallici');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('FRRCLT60D25H504L', 'FRRLGI55F20H501V', 'Ferro', 'PRN005', 'E005', 'Rimanere a digiuno');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('BLUGVN80A01H502U', 'BRTCRL90G13H501W', 'Elio', 'PRN006', 'E006', 'Bere molta acqua');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('VRDNNA80A01H507U', 'RCCGVN40H29H501X', 'Sodio', 'PRN007', 'E007', 'Non bere caffè');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('RSSLRA85M07H503A', 'NGRRBR11I12H501Y', 'Elio', 'PRN008', 'E008', 'Rilassarsi prima dell’esame');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('BLULSE45G20H511H', 'MRNLCT55L25H501Z', 'Ossigeno', 'PRN009', 'E009', 'Evitare esercizio fisico');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('BNCPLA55F20H505V', 'BNCLRA85M07H501A', 'Ossigeno', 'PRN010', 'E010', 'Rimanere a digiuno');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('BLULSE45G20H511H', 'BLUSMN30A13H501B', 'Idrogeno', 'PRN011', 'E011', 'Non assumere farmaci');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('VRDGBR45G20H506H', 'VRDPTR15B22H501C', 'Carbonio', 'PRN012', 'E012', 'Non mangiare');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('BNCLGU85M07H508A', 'RCCMRN55C18H501D', 'Azoto', 'PRN013', 'E013', 'Bere molta acqua');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('RSSMRA55F20H510V', 'FRRGCM85D09H501E', 'Ferro', 'PRN014', 'E014', 'Rimuovere protesi dentarie');
+INSERT INTO esamespecialistico (cfmed, ts, nomeamb, pren, codesame, avvertenze) VALUES ('VRDGBR45G20H506H', 'BRTCRL05E14H501F', 'Fluoro', 'PRN015', 'E015', 'Non fumare prima dell’esame');
