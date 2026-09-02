@@ -8,8 +8,8 @@
         table, th, td {            
             border: 1px solid black; 
             border-collapse: collapse;
-            text-align: left; /*mette "nome" di fianco alla riga*/
-            padding: 4px; /*aumenta dimensione testo*/
+            text-align: left; 
+            padding: 4px; 
         }
     </style>
 </head>
@@ -20,7 +20,7 @@
     if (isset($_POST['codosp']) && isset($_POST['tabella'])) {
         $codosp = $_POST['codosp'];
         $tbl = $_POST['tabella'];
-        $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=pgadmin password=unimi");
+        $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=f password=f"); //cambiati user e password per sicurezza
         if (!$conn) {
             echo "Connessione al database fallita.";
             echo pg_last_error($conn);
@@ -33,12 +33,6 @@
             $via = isset($_POST['indirizzosp']) ? $_POST['indirizzosp'] : NULL;
             $telefono = isset($_POST['tel']) ? $_POST['tel'] : NULL;
             $telefono = preg_match($pattern, $telefono) ? $telefono : 'not valid';
-
-            //echo "Valori ricevuti:<br>";
-            //echo "codosp: $codosp<br>";
-            //echo "nomeosp: $nomeosp<br>";
-            //echo "indirizzosp: $via<br>";
-            //echo "tel: $telefono<br>";
 
             if($telefono!='not valid'){
                 $query = "UPDATE " . $tbl . " SET nomeosp='$nomeosp', indirizzosp='$via', tel='$telefono' WHERE codosp='$codosp'";
@@ -60,9 +54,9 @@
                 echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla home</p>";
             };
         };
-        pg_close($conn);// Chiudi la connessione al database
+        pg_close($conn);
         exit();         
-    } else {//non sono stati passati correttamente i dati
+    } else {
         echo "Non risultano dati passati<br>";
         echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";    
         echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla home</p>";
