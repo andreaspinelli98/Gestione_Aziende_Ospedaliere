@@ -8,8 +8,8 @@
         table, th, td {            
             border: 1px solid black; 
             border-collapse: collapse;
-            text-align: left; /*mette "nome" di fianco alla riga*/
-            padding: 4px; /*aumenta dimensione testo*/
+            text-align: left; 
+            padding: 4px; 
         }
     </style>
 </head>
@@ -17,10 +17,10 @@
 <body> 
     <?php 
     session_start();
-    if (isset($_POST['submit_delete']) && isset($_POST['todelete']) && isset($_POST['tabella'])) {//sono stati passati correttamente i dati
+    if (isset($_POST['submit_delete']) && isset($_POST['todelete']) && isset($_POST['tabella'])) {
         $codosp = $_POST['todelete'];
         $tabella = $_POST['tabella'];
-        $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=pgadmin password=unimi");
+        $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=f password=f"); //cambiati user e password per sicurezza
         if (!$conn) {
             echo 'Connessione al database fallita.';
             echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";    
@@ -37,7 +37,7 @@
                 echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";    
                 echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla home</p>";
                 exit();
-            } else {//dato che la cancellazione non produce output, avviso l'utente
+            } else { //dato che la cancellazione non produce output, avviso l'utente
                 echo "Cancellazione avvenuta con successo<br>";
                 echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";    
                 echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla home</p>";
@@ -45,7 +45,7 @@
         };
         exit();
         pg_close($conn);
-    } else {//non sono stati passati correttamente i dati
+    } else { //non sono stati passati correttamente i dati
         echo "Non risultano dati passati<br>";
         echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";    
         echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla home</p>";
