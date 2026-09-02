@@ -9,10 +9,10 @@
 <body>
    <?php     
         session_start();
-        if (isset($_POST['tabella']) && isset($_POST['toinsert'])) { //
-        $tbl = $_POST['tabella']; // Assegna la tabella selezionata a una variabile
-        $op = $_POST['toinsert']; // Assegna l'operazione selezionata a una variabile
-        $_SESSION['tbl'] = $tbl; // Memorizza la tabella selezionata nella sessione
+        if (isset($_POST['tabella']) && isset($_POST['toinsert'])) {
+        $tbl = $_POST['tabella']; 
+        $op = $_POST['toinsert']; 
+        $_SESSION['tbl'] = $tbl; //memorizza la tabella selezionata nella sessione
 
            $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=pgadmin password=unimi");            
             if (!$conn) {
@@ -23,7 +23,7 @@
             };
     
             if ($op = 'insert') {
-                switch ($tbl) { // Stabilisce cosa fare in base alla tabella selezionata
+                switch ($tbl) { 
                     case 'ospedale':
                         $pattern = '/^[0-9]+$/';
                         $codice = isset($_POST['codosp']) ? $_POST['codosp'] : NULL;
@@ -230,9 +230,9 @@
                     break;
                 };     
                 exit();
-                pg_close($conn); // Chiudi la connessione al database
+                pg_close($conn); 
             }           
-        } else { // Non sono stati passati correttamente i dati
+        } else { //non sono stati passati correttamente i dati
             echo "Non risultano dati passati<br>";
             echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";
             echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla Home</p>";
