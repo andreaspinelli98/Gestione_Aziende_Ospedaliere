@@ -18,12 +18,12 @@
    <?php 
     session_start();
     if (isset($_POST['tabella']) && isset($_POST['operazione'])) {  
-        $tbl = $_POST['tabella']; // Assegna la tabella selezionata a una variabile
+        $tbl = $_POST['tabella']; //assegna la tabella selezionata a una variabile
         $op = $_POST['operazione'];
         
         $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=pgadmin password=unimi");
     
-        // Verifica se la connessione è avvenuta con successo
+        //verifica se la connessione è avvenuta con successo
         if (!$conn) {
             echo "Errore di connessione al database.";
             exit;
@@ -58,7 +58,6 @@
                         </table>
                             <input type='hidden' name='tabella' value='$tbl'> 
                         </form>";
-                //<input type='hidden' name='tabella' value='$tbl'> è un campo nascosto che passa la tabella
                         echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";
                         echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla Home</p>";
                 break;
@@ -348,7 +347,7 @@
                                         <td>' . $row['indirizzosp'] . '</td>
                                         <td>' . $row['tel'] . '</td>
                                         <td><input type="radio" name="toupdate" value="' . $row['codosp'] . '" required></td>
-                                    </tr>';//serve radio button per permettere all'utente di scegliere cosa cambiare
+                                    </tr>';
                                 }                                
                             echo "</table>";
                                 echo "<input type='submit' name='submit_update' value='Invio'>";
@@ -388,7 +387,7 @@
                                         <td>' . $row['indirizzosp'] . '</td>
                                         <td>' . $row['tel'] . '</td>
                                         <td><input type="radio" name="todelete" value="' . $row['codosp'] . '" required></td>
-                                    </tr>';//serve radio button per permettere all'utente di scegliere cosa eliminare
+                                    </tr>';
                                 }           
                                 echo "<input type='hidden' name='tabella' value='$tbl'>";                     
                             echo "</table>";
