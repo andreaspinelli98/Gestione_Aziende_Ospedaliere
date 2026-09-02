@@ -13,7 +13,7 @@ Applicazione web per la gestione semplificata di un insieme di aziende ospedalie
 # Sito web
 La navigazione del sito è basata su una struttura a link: partendo dalla home page, ogni collegamento porta alla relativa sezione dell'applicativo. La grafica è minimale, poiché l'obiettivo del progetto è la gestione della base di dati piuttosto che la cura dell'aspetto visivo.
 
-![Home](SitoWeb/Home.png)
+![Home](SitoWeb/Screenshot/Home.png)
 
 # Schemi
 - Schema ER1
