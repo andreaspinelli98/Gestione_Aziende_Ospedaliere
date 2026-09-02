@@ -14,7 +14,7 @@
         $op = $_POST['toinsert']; 
         $_SESSION['tbl'] = $tbl; //memorizza la tabella selezionata nella sessione
 
-           $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=pgadmin password=unimi");            
+           $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=f password=f");            
             if (!$conn) {
                 echo 'Connessione al database fallita.';
                 exit();
