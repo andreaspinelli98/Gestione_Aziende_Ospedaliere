@@ -26,3 +26,4 @@ La navigazione del sito è basata su una struttura a link: partendo dalla home p
 # Documentazione
 - [Specifica del progetto](Docs/progetto2023-2024.pdf)
 - [Documentazione completa](Docs/DocUfficiale.pdf)
+- [Funzionamento dell'applicativo](Docs/Funzionamento.pdf)
