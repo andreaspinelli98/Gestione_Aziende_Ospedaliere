@@ -6,12 +6,11 @@
 <body>
 		<p class="form">
 <?php
-//phpinfo();
+
 $conn = pg_connect("host=localhost port=5432 dbname=progetto user=pgadmin password=unimi");
 if (!$conn){
 	echo 'Connessione al database fallita.';
 	exit();
-	//die('Connessione al database fallita.');
 } else {
 	echo "Connessione riuscita.<br/>";
 	$query = "SELECT *
@@ -43,7 +42,7 @@ if (!$conn){
             	<td>'. $row['via'].'</td>          
             	<td>'. $row['nciv'].'</td>
             	<td>'. $row[6].'</td>          		
-          	</tr>';//<td>'. $row['nint'].'</td>
+          	</tr>';
 		};
 		echo '</table>';
 	};
