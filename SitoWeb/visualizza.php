@@ -8,8 +8,8 @@
         table, th, td {            
             border: 1px solid black; 
             border-collapse: collapse;
-            text-align: left; /*mette "nome" di fianco alla riga*/
-            padding: 4px; /*aumenta dimensione testo*/
+            text-align: left; 
+            padding: 4px;
         }
     </style>
 </head>
@@ -17,12 +17,12 @@
 <body>
    <?php
    session_start();
-   if (isset($_POST['tabella']) && isset($_POST['operazione'])) { // Verifica se i dati sono stati passati correttamente
-    $tbl = $_POST['tabella']; // Assegna la tabella selezionata a una variabile
-    $op = $_POST['operazione']; // Assegna l'operazione selezionata a una variabile
-    $_SESSION['tbl'] = $tbl; // Memorizza la tabella selezionata nella sessione
+   if (isset($_POST['tabella']) && isset($_POST['operazione'])) { 
+    $tbl = $_POST['tabella']; 
+    $op = $_POST['operazione']; 
+    $_SESSION['tbl'] = $tbl; 
    
-        $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=pgadmin password=unimi");
+        $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=f password=f"); //cambiati user e password per sicurezza
         
         if (!$conn) {
             echo 'Connessione al database fallita.';
@@ -32,18 +32,18 @@
         };
 
         if ($op = 'select') {
-            switch ($tbl) { // Stabilisce cosa fare in base alla tabella selezionata
+            switch ($tbl) { 
                 case 'ospedale':
                     $query = "SELECT * FROM ospedale";
                     $result = pg_query($conn, $query);
 
-                    if (!$result) { // La query ha generato errori
+                    if (!$result) {
                         echo "Si è verificato un errore.<br/>";
                         echo pg_last_error($conn);
                         echo "<p> Clicca <a href='select.php'>qui</a> per tornare indietro</p>";
                         echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla Home</p>";
                         exit();
-                    } else { // La query non ha generato errori
+                    } else { 
                         echo '<br><table>
                             <tr>
                                 <th>Codice</th>
@@ -143,9 +143,9 @@
             };
 
             exit();
-            pg_close($conn); // Chiudi la connessione al database
+            pg_close($conn); 
         }
-    } else { // Non sono stati passati correttamente i dati
+    } else { 
         echo "Non risultano dati passati<br>";
         echo "<p> Clicca <a href='select.php'>qui</a> per tornare indietro</p>";
         echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla Home</p>";
