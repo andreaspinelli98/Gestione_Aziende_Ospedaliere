@@ -20,7 +20,7 @@
         if (isset($_POST['submit_update']) && isset($_POST['toupdate']) && isset($_POST['tabella'])) {
             $codosp = $_POST['toupdate'];
             $tabella = $_POST['tabella'];            
-            $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=pgadmin password=unimi");
+            $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=f password=f"); //cambiati user e password per sicurezza
             if (!$conn) {
                 echo "Connessione al database fallita.";
                 exit();
@@ -40,7 +40,7 @@
 
                     print ("<form action='update2.php' method='POST'>");
                     print ("<table>");
-//una volta raccolte le modifiche, passo i dati al file preposto all'applicazione delle stesse
+
                     print ("<tr><th>Codice</th><td><input type=\"text\" name=\"codosp\" value='" . $array['codosp'] . "' required readonly></td></tr>");
                     print ("<tr><th>Nome</th><td><input type=\"text\" name=\"nomeosp\" value='" .$array['nomeosp'] . "' required></td></tr>");
                     print ("<tr><th>Indirizzo</th><td><input type=\"text\" name=\"indirizzosp\" value='" . $array['indirizzosp'] . "' required></td></tr>");
