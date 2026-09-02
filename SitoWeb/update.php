@@ -8,8 +8,8 @@
         table, th, td {            
             border: 1px solid black; 
             border-collapse: collapse;
-            text-align: left; /*mette "nome" di fianco alla riga*/
-            padding: 4px; /*aumenta dimensione testo*/
+            text-align: left; 
+            padding: 4px; 
         }
     </style>
 </head>
@@ -41,7 +41,6 @@
                     print ("<form action='update2.php' method='POST'>");
                     print ("<table>");
 //una volta raccolte le modifiche, passo i dati al file preposto all'applicazione delle stesse
-//si noti che la chiave primaria non deve essere modificabile
                     print ("<tr><th>Codice</th><td><input type=\"text\" name=\"codosp\" value='" . $array['codosp'] . "' required readonly></td></tr>");
                     print ("<tr><th>Nome</th><td><input type=\"text\" name=\"nomeosp\" value='" .$array['nomeosp'] . "' required></td></tr>");
                     print ("<tr><th>Indirizzo</th><td><input type=\"text\" name=\"indirizzosp\" value='" . $array['indirizzosp'] . "' required></td></tr>");
