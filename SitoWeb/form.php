@@ -8,8 +8,8 @@
         table, th, td {            
             border: 1px solid black; 
             border-collapse: collapse;
-            text-align: left; /*mette "nome" di fianco alla riga*/
-            padding: 4px; /*aumenta dimensione testo*/
+            text-align: left; 
+            padding: 4px; 
         }
     </style>
 </head>
@@ -18,12 +18,11 @@
    <?php 
     session_start();
     if (isset($_POST['tabella']) && isset($_POST['operazione'])) {  
-        $tbl = $_POST['tabella']; //assegna la tabella selezionata a una variabile
+        $tbl = $_POST['tabella']; 
         $op = $_POST['operazione'];
         
-        $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=pgadmin password=unimi");
+        $conn = pg_connect("host=localhost port=5432 dbname=Progetto user=f password=f"); //cambiati user e password per sicurezza
     
-        //verifica se la connessione è avvenuta con successo
         if (!$conn) {
             echo "Errore di connessione al database.";
             exit;
@@ -32,7 +31,7 @@
         switch ($op) {
             case 'insert':
             switch ($tbl) {
-                case 'ospedale': //codosp, nomeosp, indirizzosp, tel
+                case 'ospedale': 
                     echo "<form action='insert.php' method='POST'>
                         <table>
                         <tr>
@@ -61,7 +60,7 @@
                         echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";
                         echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla Home</p>";
                 break;
-                case 'reparto'://codiceosp, nomerep, telrep, orariovisite
+                case 'reparto':
                     echo "<form action='insert.php' method='POST'>
                         <table>
                         <tr>
@@ -97,7 +96,7 @@
                         echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";
                         echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla Home</p>";
                 break;
-                case 'medico': //codiceosp, rep, codfisc, nome, cognome, tel, anzianità
+                case 'medico': 
                     echo "<form action='insert.php' method='POST'>
                         <table>
                         <tr>
@@ -138,7 +137,7 @@
                         echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";
                         echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla Home</p>";
                 break;
-                case 'infermiere': //codiceosp, rep, codfisc, nome, cognome, tel, tipo
+                case 'infermiere': 
                     echo "<form action='insert.php' method='POST'>
                         <table>
                         <tr>
@@ -187,7 +186,7 @@
                         echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";
                         echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla Home</p>";
                 break;
-                case 'esame': //codesame, descriz
+                case 'esame': 
                     echo "<form action='insert.php' method='POST'>
                         <table>
                         <tr>
@@ -208,7 +207,7 @@
                         echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";
                         echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla Home</p>";
                 break;
-                case 'paziente': //tesserasanitaria, nomepaz, cognomepaz, etàpaz, datanascita, indirizzopaz, telpaz, città, datadimiss
+                case 'paziente': 
                     echo "<form action='insert.php' method='POST'>
                         <table>
                         <tr>
@@ -257,7 +256,7 @@
                         echo "<p> Clicca <a href='operazioni.php'>qui</a> per tornare indietro</p>";
                         echo "<p> Clicca <a href='home.html'>qui</a> per tornare alla Home</p>";
                 break;
-                case 'prenotazione': //tessanit, nomeamb, id, datapren, dataesame, oraesame, urgenza, regimecosto
+                case 'prenotazione': 
                     echo "<form action='insert.php' method='POST'>
                         <table>
                         <tr>
