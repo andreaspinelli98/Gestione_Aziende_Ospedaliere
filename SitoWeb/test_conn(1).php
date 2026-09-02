@@ -7,7 +7,7 @@
 		<p class="form">
 <?php
 
-$conn = pg_connect("host=localhost port=5432 dbname=progetto user=pgadmin password=unimi");
+$conn = pg_connect("host=localhost port=5432 dbname=progetto user=f password=f"); //cambiati user e password per sicurezza
 if (!$conn){
 	echo 'Connessione al database fallita.';
 	exit();
