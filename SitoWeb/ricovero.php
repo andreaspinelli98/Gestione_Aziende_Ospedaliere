@@ -10,9 +10,9 @@
     <?php
         echo "<form action='vediricovero.php' method='POST'>";
         echo "<p> Inserire tessera sanitaria del paziente: ";
-        echo "<input type='text' name='tessanit'>"; //è questo name che è passato nell'altra pagina
+        echo "<input type='text' name='tessanit'>"; 
         
-        echo "<input type='submit' value='Invio'>";//non serve mettare name qui dentro
+        echo "<input type='submit' value='Invio'>";
         echo "</form>";
         echo "<p> Clicca <a href='home.html'>qui</a> per tornare indietro</p>";
     ?>
